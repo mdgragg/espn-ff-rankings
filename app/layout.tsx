@@ -4,7 +4,7 @@ export const metadata = {
   title: "ESPN Fantasy Football Power Rankings",
   description: "ESPN Fantasy Football Power Rankings",
   icons: {
-    icon: "/images/ff-logo.png",
+    icon: "/images/favicon.ico",
   },
 };
 
