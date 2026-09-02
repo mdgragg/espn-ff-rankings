@@ -4,8 +4,13 @@ export const metadata = {
   title: "ESPN Fantasy Football Power Rankings",
   description: "ESPN Fantasy Football Power Rankings",
   icons: {
-    icon: "/favicon.ico",
-    apple: "/apple-touch-icon.png",
+    icon: "/images/favicon.ico",
+    apple: "/images/apple-touch-icon.png",
+  },
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
   },
 };
 

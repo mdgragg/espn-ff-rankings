@@ -1,0 +1,26 @@
+{
+  "name": "ESPN Fantasy Football Power Rankings",
+  "short_name": "FF Power Rankings",
+  "description": "ESPN Fantasy Football Power Rankings",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/images/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/favicon.ico",
+      "sizes": "32x32",
+      "type": "image/x-icon"
+    }
+  ],
+  "categories": ["sports"],
+  "screenshots": []
+}
