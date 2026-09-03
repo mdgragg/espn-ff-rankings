@@ -432,10 +432,6 @@ img {
   background: #2ccc30;
 }
 
-.team-card.weekly-winner .rank {
-  background: #091985;
-}
-
 /* =========================================================
    TEAM LOGO
    ========================================================= */
@@ -612,7 +608,7 @@ img {
 }
 
 .result-loss {
-  color: #091985 !important;
+  color: #e05252 !important;
   font-weight: 800;
 }
 
@@ -791,6 +787,14 @@ img {
   gap: 12px;
   margin-top: auto;
   align-items: flex-start;
+}
+
+.detail-stat-row .trend-up {
+  color: #22c55e; /* green */
+}
+
+.detail-stat-row .trend-down {
+  color: #e05252; /* red */
 }
 
 /* =========================================================

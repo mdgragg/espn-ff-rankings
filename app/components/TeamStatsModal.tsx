@@ -56,7 +56,7 @@ export default function TeamStatsModal({
             </div>
           </div>
 
-          <h4>Season Totals</h4>
+          <h4>Regular Season Totals</h4>
 
           <div className="detail-stat-row">
             <span>Record</span>
@@ -67,59 +67,70 @@ export default function TeamStatsModal({
           </div>
 
           <div className="detail-stat-row">
-            <span>Points For</span>
+            <span>Points For (Reg Season)</span>
             <strong>
-              {formatPoints(team.pointsFor)} (
-              {ordinal(team.ranking.pointsForRank)})
+              {formatPoints(team.regularSeasonPointsFor)} (
+              {ordinal(team.ranking.regularSeasonPointsForRank)})
             </strong>
           </div>
 
           <div className="detail-stat-row">
-            <span>Points Against</span>
+            <span>Points Against (Reg Season)</span>
             <strong>
-              {formatPoints(team.pointsAgainst)} (
-              {ordinal(team.ranking.pointsAgainstRank)})
+              {formatPoints(team.regularSeasonPointsAgainst)} (
+              {ordinal(team.ranking.regularSeasonPointsAgainstRank)})
             </strong>
           </div>
 
           <div className="detail-stat-row">
-            <span>Avg Points Per Week</span>
-            <strong>{formatPoints(team.avgPointsPerWeek)}</strong>
-          </div>
-
-          <div className="detail-stat-row">
-            <span>Highest Week Score</span>
+            <span>Avg Points Per Week (Reg Season)</span>
             <strong>
-              {formatPoints(team.highestWeekScore)} (Week{" "}
-              {team.highestWeekNumber})
+              {formatPoints(team.regularSeasonAvgPointsPerWeek)} (
+              {ordinal(team.ranking.regularSeasonAvgPointsPerWeekRank)})
             </strong>
           </div>
 
           <div className="detail-stat-row">
-            <span>Recent Trend</span>
+            <span>Highest Week Score (Reg Season)</span>
             <strong>
-              {team.recentFormTrend.trend === "up"
+              {formatPoints(team.regularSeasonHighestWeekScore)} (
+              {ordinal(team.ranking.regularSeasonHighestWeekScoreRank)}) Week{" "}
+              {team.regularSeasonHighestWeekNumber}
+            </strong>
+          </div>
+
+          <div className="detail-stat-row">
+            <span>Recent Trend (Reg Season)</span>
+            <strong className={`trend-${team.regularSeasonRecentFormTrend.trend}`}>
+              {team.regularSeasonRecentFormTrend.trend === "up"
                 ? "↑"
-                : team.recentFormTrend.trend === "down"
+                : team.regularSeasonRecentFormTrend.trend === "down"
                   ? "↓"
                   : "→"}{" "}
-              +{formatPoints(team.recentFormTrend.avgLast3)} avg (last 3 weeks)
+              {team.regularSeasonRecentFormTrend.change >= 0 ? "+" : ""}
+              {formatPoints(team.regularSeasonRecentFormTrend.change)} (last 3
+              weeks)
             </strong>
           </div>
 
           <div className="detail-stat-row">
             <span>Bench Points</span>
-            <strong>{formatPoints(team.benchPoints)}</strong>
+            <strong>
+              {formatPoints(team.benchPoints)} (
+              {ordinal(team.ranking.benchPointsRank)})
+            </strong>
           </div>
 
           <div className="detail-stat-row">
             <span>Strength of Schedule</span>
-            <strong>{(team.strengthOfSchedule * 100).toFixed(1)}%</strong>
+            <strong>{ordinal(team.ranking.strengthOfScheduleRank)}</strong>
           </div>
 
           <div className="detail-stat-row">
             <span>Pickups</span>
-            <strong>{team.pickupCount}</strong>
+            <strong>
+              {team.pickupCount} ({ordinal(team.ranking.pickupCountRank)})
+            </strong>
           </div>
 
           <div className="detail-stat-row">

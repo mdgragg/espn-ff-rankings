@@ -116,9 +116,9 @@ export default function TeamCard({ team, blurb }: TeamCardProps) {
               <div className="owner">{team.ownerName}</div>
             </div>
 
-            {isWeeklyWinner && (
+            {/* {isWeeklyWinner && (
               <span className="winner-badge">WEEKLY WINNER</span>
-            )}
+            )} */}
           </div>
 
           {blurb?.trim() && <div className="team-blurb">{blurb}</div>}

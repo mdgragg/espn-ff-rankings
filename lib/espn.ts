@@ -44,6 +44,15 @@ export interface EspnTeamRanking {
   winsRank: number;
   pointsForRank: number;
   pointsAgainstRank: number;
+  strengthOfScheduleRank: number;
+  avgPointsPerWeekRank: number;
+  highestWeekScoreRank: number;
+  benchPointsRank: number;
+  pickupCountRank: number;
+  regularSeasonPointsForRank: number;
+  regularSeasonPointsAgainstRank: number;
+  regularSeasonAvgPointsPerWeekRank: number;
+  regularSeasonHighestWeekScoreRank: number;
 }
 
 export interface EspnLastMatchup {
@@ -76,9 +85,21 @@ export interface EspnPowerRankingTeam extends EspnTeam {
     weekScores: Array<{ week: number; points: number }>;
     avgLast3: number;
     trend: "up" | "down" | "stable";
+    change: number;
   };
   highestWeekScore: number;
   highestWeekNumber: number;
+  regularSeasonPointsFor: number;
+  regularSeasonPointsAgainst: number;
+  regularSeasonHighestWeekScore: number;
+  regularSeasonHighestWeekNumber: number;
+  regularSeasonAvgPointsPerWeek: number;
+  regularSeasonRecentFormTrend: {
+    weekScores: Array<{ week: number; points: number }>;
+    avgLast3: number;
+    trend: "up" | "down" | "stable";
+    change: number;
+  };
 }
 
 export interface EspnLeagueData {
@@ -329,6 +350,15 @@ export async function fetchEspnLeague(
         winsRank: 0,
         pointsForRank: 0,
         pointsAgainstRank: 0,
+        strengthOfScheduleRank: 0,
+        avgPointsPerWeekRank: 0,
+        highestWeekScoreRank: 0,
+        benchPointsRank: 0,
+        pickupCountRank: 0,
+        regularSeasonPointsForRank: 0,
+        regularSeasonPointsAgainstRank: 0,
+        regularSeasonAvgPointsPerWeekRank: 0,
+        regularSeasonHighestWeekScoreRank: 0,
       },
 
       benchPoints: 0,
@@ -340,9 +370,21 @@ export async function fetchEspnLeague(
         weekScores: [],
         avgLast3: 0,
         trend: "stable" as const,
+        change: 0,
       },
       highestWeekScore: 0,
       highestWeekNumber: 0,
+      regularSeasonPointsFor: 0,
+      regularSeasonPointsAgainst: 0,
+      regularSeasonHighestWeekScore: 0,
+      regularSeasonHighestWeekNumber: 0,
+      regularSeasonAvgPointsPerWeek: 0,
+      regularSeasonRecentFormTrend: {
+        weekScores: [],
+        avgLast3: 0,
+        trend: "stable" as const,
+        change: 0,
+      },
     }),
   );
 
@@ -427,6 +469,10 @@ export async function fetchEspnLeague(
       Array<{ week: number; points: number }>
     >();
     const highestScores = new Map<number, { week: number; points: number }>();
+    const weeklyOpponentScores = new Map<
+      number,
+      Array<{ week: number; points: number }>
+    >();
 
     for (let w = 1; w < currentWeek; w++) {
       try {
@@ -471,9 +517,17 @@ export async function fetchEspnLeague(
             highestScores.set(homeTeamId, { week: w, points: homePoints });
           }
 
+          // Home team's opponent points (points against)
+          const awayPoints = matchup.away.totalPoints;
+          if (!weeklyOpponentScores.has(homeTeamId)) {
+            weeklyOpponentScores.set(homeTeamId, []);
+          }
+          weeklyOpponentScores
+            .get(homeTeamId)!
+            .push({ week: w, points: awayPoints });
+
           // Away team
           const awayTeamId = matchup.away.teamId;
-          const awayPoints = matchup.away.totalPoints;
           if (!weeklyScores.has(awayTeamId)) {
             weeklyScores.set(awayTeamId, []);
           }
@@ -485,13 +539,21 @@ export async function fetchEspnLeague(
           ) {
             highestScores.set(awayTeamId, { week: w, points: awayPoints });
           }
+
+          // Away team's opponent points (points against)
+          if (!weeklyOpponentScores.has(awayTeamId)) {
+            weeklyOpponentScores.set(awayTeamId, []);
+          }
+          weeklyOpponentScores
+            .get(awayTeamId)!
+            .push({ week: w, points: homePoints });
         }
       } catch (error) {
         console.warn(`Failed to load matchups for week ${w}:`, error);
       }
     }
 
-    return { weeklyScores, highestScores };
+    return { weeklyScores, highestScores, weeklyOpponentScores };
   }
 
   // ----------------------------------------------------------
@@ -617,15 +679,51 @@ export async function fetchEspnLeague(
   // Calculate advanced team stats
   // ----------------------------------------------------------
 
-  const { weeklyScores, highestScores } = await loadAllWeeklyScores();
+  const { weeklyScores, highestScores, weeklyOpponentScores } =
+    await loadAllWeeklyScores();
   const pickupCounts = await getTransactionData();
 
+  const REGULAR_SEASON_WEEKS = 13;
+
   for (const team of teams) {
-    // Highest weekly score
+    // Highest weekly score (all weeks)
     if (highestScores.has(team.id)) {
       const high = highestScores.get(team.id)!;
       team.highestWeekScore = high.points;
       team.highestWeekNumber = high.week;
+    }
+
+    // Regular season highest weekly score (weeks 1-13 only)
+    if (weeklyScores.has(team.id)) {
+      const regularSeasonScores = weeklyScores
+        .get(team.id)!
+        .filter((s) => s.week <= REGULAR_SEASON_WEEKS);
+      if (regularSeasonScores.length > 0) {
+        const regularSeasonHigh = regularSeasonScores.reduce((prev, current) =>
+          current.points > prev.points ? current : prev,
+        );
+        team.regularSeasonHighestWeekScore = regularSeasonHigh.points;
+        team.regularSeasonHighestWeekNumber = regularSeasonHigh.week;
+
+        // Regular season points for
+        team.regularSeasonPointsFor = regularSeasonScores.reduce(
+          (sum, s) => sum + s.points,
+          0,
+        );
+      }
+    }
+
+    // Regular season points against
+    if (weeklyOpponentScores.has(team.id)) {
+      const regularSeasonOpponentScores = weeklyOpponentScores
+        .get(team.id)!
+        .filter((s) => s.week <= REGULAR_SEASON_WEEKS);
+      if (regularSeasonOpponentScores.length > 0) {
+        team.regularSeasonPointsAgainst = regularSeasonOpponentScores.reduce(
+          (sum, s) => sum + s.points,
+          0,
+        );
+      }
     }
 
     // Weekly scores and recent form trend
@@ -653,10 +751,47 @@ export async function fetchEspnLeague(
           if (oldScores.length > 0) {
             const oldAvg =
               oldScores.reduce((sum, s) => sum + s.points, 0) / oldScores.length;
+            team.recentFormTrend.change = recentAvg - oldAvg;
             if (recentAvg > oldAvg + 5) {
               team.recentFormTrend.trend = "up";
             } else if (recentAvg < oldAvg - 5) {
               team.recentFormTrend.trend = "down";
+            }
+          }
+        }
+      }
+
+      // Regular season stats (weeks 1-13)
+      const regularSeasonScores = scores.filter(
+        (s) => s.week <= REGULAR_SEASON_WEEKS,
+      );
+      team.regularSeasonRecentFormTrend.weekScores = regularSeasonScores;
+
+      if (regularSeasonScores.length >= 1) {
+        team.regularSeasonAvgPointsPerWeek =
+          regularSeasonScores.reduce((sum, s) => sum + s.points, 0) /
+          regularSeasonScores.length;
+      }
+
+      // Regular season recent form (last 3 weeks of regular season)
+      const regularSeasonRecentScores = regularSeasonScores.slice(-3);
+      if (regularSeasonRecentScores.length > 0) {
+        const recentAvg =
+          regularSeasonRecentScores.reduce((sum, s) => sum + s.points, 0) /
+          regularSeasonRecentScores.length;
+        team.regularSeasonRecentFormTrend.avgLast3 = recentAvg;
+
+        // Determine trend
+        if (regularSeasonRecentScores.length >= 2) {
+          const oldScores = regularSeasonScores.slice(-6, -3);
+          if (oldScores.length > 0) {
+            const oldAvg =
+              oldScores.reduce((sum, s) => sum + s.points, 0) / oldScores.length;
+            team.regularSeasonRecentFormTrend.change = recentAvg - oldAvg;
+            if (recentAvg > oldAvg + 5) {
+              team.regularSeasonRecentFormTrend.trend = "up";
+            } else if (recentAvg < oldAvg - 5) {
+              team.regularSeasonRecentFormTrend.trend = "down";
             }
           }
         }
@@ -666,19 +801,48 @@ export async function fetchEspnLeague(
     // Pickup count
     team.pickupCount = pickupCounts.get(team.id) || 0;
 
-    // Strength of schedule: average win % of remaining opponents
-    const nextMatchup = getMatchupForTeam(nextMatchups, team.id);
-    if (nextMatchup) {
-      const opponentSide = getOpponent(nextMatchup, team.id);
-      if (opponentSide) {
-        const opponent = teams.find(
-          (other) => other.id === opponentSide.teamId,
-        );
-        if (opponent) {
-          const totalGames = opponent.wins + opponent.losses + opponent.ties;
-          const winPct = totalGames > 0 ? opponent.wins / totalGames : 0.5;
-          team.strengthOfSchedule = winPct;
+    // Strength of schedule: average win % of all remaining opponents
+    async function getRemainingSchedule(): Promise<number[]> {
+      const opponentIds: number[] = [];
+      for (let w = week; w <= week + 5; w++) {
+        try {
+          const matchupUrl = buildLeagueUrl(leagueId, season, ["mMatchupScore"], {
+            matchupPeriodId: w,
+          });
+          const matchupData = await fetchEspn(matchupUrl, swid, s2);
+          const schedule = matchupData.schedule || [];
+          const teamMatchup = schedule.find(
+            (m: any) =>
+              Number(m.home?.teamId) === team.id || Number(m.away?.teamId) === team.id,
+          );
+          if (teamMatchup) {
+            const isHome = Number(teamMatchup.home?.teamId) === team.id;
+            const opponentId = isHome
+              ? Number(teamMatchup.away?.teamId)
+              : Number(teamMatchup.home?.teamId);
+            opponentIds.push(opponentId);
+          }
+        } catch (error) {
+          // Skip if week schedule not available
         }
+      }
+      return opponentIds;
+    }
+
+    const remainingSchedule = await getRemainingSchedule();
+    if (remainingSchedule.length > 0) {
+      const opponentWinPcts = remainingSchedule
+        .map((oppId) => teams.find((t) => t.id === oppId))
+        .filter(Boolean)
+        .map((opponent) => {
+          const totalGames =
+            opponent!.wins + opponent!.losses + opponent!.ties;
+          return totalGames > 0 ? opponent!.wins / totalGames : 0.5;
+        });
+
+      if (opponentWinPcts.length > 0) {
+        team.strengthOfSchedule =
+          opponentWinPcts.reduce((a, b) => a + b, 0) / opponentWinPcts.length;
       }
     }
 
@@ -741,12 +905,92 @@ export async function fetchEspnLeague(
     pointsAgainstRank++;
   }
 
+  // Strength of schedule rank (lower SOS = easier = rank 1)
+  const sosSorted = [...teams].sort(
+    (a, b) => a.strengthOfSchedule - b.strengthOfSchedule,
+  );
+
+  const sosRanks: Record<number, number> = {};
+
+  let sosRank = 1;
+
+  for (let i = 0; i < sosSorted.length; i++) {
+    const current = sosSorted[i];
+
+    const previous = sosSorted[i - 1];
+
+    if (i > 0 && current.strengthOfSchedule === previous.strengthOfSchedule) {
+      sosRanks[current.id] = sosRanks[previous.id];
+    } else {
+      sosRanks[current.id] = sosRank;
+    }
+
+    sosRank++;
+  }
+
+  // Calculate remaining ranks
+  const avgPointsPerWeekRanks = computeRank(
+    teams,
+    (team) => team.avgPointsPerWeek,
+  );
+  const highestWeekScoreRanks = computeRank(
+    teams,
+    (team) => team.highestWeekScore,
+  );
+  const benchPointsRanks = computeRank(teams, (team) => team.benchPoints);
+  const pickupCountRanks = computeRank(teams, (team) => team.pickupCount);
+
+  // Regular season ranks
+  const regularSeasonPointsForRanks = computeRank(
+    teams,
+    (team) => team.regularSeasonPointsFor,
+  );
+  const regularSeasonPointsAgainstSorted = [...teams].sort(
+    (a, b) => a.regularSeasonPointsAgainst - b.regularSeasonPointsAgainst,
+  );
+  const regularSeasonPointsAgainstRanks: Record<number, number> = {};
+  let regularSeasonPARank = 1;
+  for (let i = 0; i < regularSeasonPointsAgainstSorted.length; i++) {
+    const current = regularSeasonPointsAgainstSorted[i];
+    const previous = regularSeasonPointsAgainstSorted[i - 1];
+    if (
+      i > 0 &&
+      current.regularSeasonPointsAgainst === previous.regularSeasonPointsAgainst
+    ) {
+      regularSeasonPointsAgainstRanks[current.id] =
+        regularSeasonPointsAgainstRanks[previous.id];
+    } else {
+      regularSeasonPointsAgainstRanks[current.id] = regularSeasonPARank;
+    }
+    regularSeasonPARank++;
+  }
+
+  const regularSeasonAvgPointsPerWeekRanks = computeRank(
+    teams,
+    (team) => team.regularSeasonAvgPointsPerWeek,
+  );
+  const regularSeasonHighestWeekScoreRanks = computeRank(
+    teams,
+    (team) => team.regularSeasonHighestWeekScore,
+  );
+
   teams.forEach((team) => {
     team.ranking.winsRank = winsRanks[team.id];
-
     team.ranking.pointsForRank = pointsForRanks[team.id];
-
     team.ranking.pointsAgainstRank = pointsAgainstRanks[team.id];
+    team.ranking.strengthOfScheduleRank = sosRanks[team.id];
+    team.ranking.avgPointsPerWeekRank = avgPointsPerWeekRanks[team.id];
+    team.ranking.highestWeekScoreRank = highestWeekScoreRanks[team.id];
+    team.ranking.benchPointsRank = benchPointsRanks[team.id];
+    team.ranking.pickupCountRank = pickupCountRanks[team.id];
+    team.ranking.regularSeasonPointsForRank =
+      regularSeasonPointsForRanks[team.id];
+    team.ranking.regularSeasonPointsAgainstRank =
+      regularSeasonPointsAgainstRanks[team.id];
+    team.ranking.regularSeasonAvgPointsPerWeekRank =
+      regularSeasonAvgPointsPerWeekRanks[team.id];
+    team.ranking.regularSeasonHighestWeekScoreRank =
+      regularSeasonHighestWeekScoreRanks[team.id];
   });
 
   // ----------------------------------------------------------

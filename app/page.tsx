@@ -133,31 +133,19 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         </div>
 
         <nav className="week-nav">
-          {Array.from({ length: league.weeks }, (_, index) => index + 1).map(
-            (week) => {
-              const isActive = week === selectedWeek;
+          {Array.from({ length: 17 }, (_, index) => index + 1).map((week) => {
+            const isActive = week === selectedWeek;
 
-              const isUnlocked = week <= league.currentWeek;
-
-              if (!isUnlocked) {
-                return (
-                  <span key={week} className="week-link disabled">
-                    {week}
-                  </span>
-                );
-              }
-
-              return (
-                <a
-                  key={week}
-                  href={`/?week=${week}`}
-                  className={`week-link ${isActive ? "active" : ""}`}
-                >
-                  {week}
-                </a>
-              );
-            },
-          )}
+            return (
+              <a
+                key={week}
+                href={`/?week=${week}`}
+                className={`week-link ${isActive ? "active" : ""}`}
+              >
+                {week}
+              </a>
+            );
+          })}
         </nav>
 
         <section className="team-avatars">
@@ -191,13 +179,16 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           <div className="high-score-grid">
             {(() => {
               const highestGameTeam = displayTeams.reduce((prev, current) =>
-                current.highestWeekScore > prev.highestWeekScore
+                current.regularSeasonHighestWeekScore >
+                prev.regularSeasonHighestWeekScore
                   ? current
                   : prev,
               );
 
               const highestTotalTeam = displayTeams.reduce((prev, current) =>
-                current.pointsFor > prev.pointsFor ? current : prev,
+                current.regularSeasonPointsFor > prev.regularSeasonPointsFor
+                  ? current
+                  : prev,
               );
 
               return (
@@ -224,8 +215,11 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                       <div className="high-score-info">
                         <h3>{highestGameTeam.name}</h3>
                         <p className="high-score-value">
-                          {highestGameTeam.highestWeekScore.toFixed(2)} points
-                          (Week {highestGameTeam.highestWeekNumber})
+                          {highestGameTeam.regularSeasonHighestWeekScore.toFixed(
+                            2,
+                          )}{" "}
+                          points
+                          (Week {highestGameTeam.regularSeasonHighestWeekNumber})
                         </p>
                       </div>
                     </div>
@@ -253,7 +247,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                       <div className="high-score-info">
                         <h3>{highestTotalTeam.name}</h3>
                         <p className="high-score-value">
-                          {highestTotalTeam.pointsFor.toFixed(2)} points
+                          {highestTotalTeam.regularSeasonPointsFor.toFixed(2)}{" "}
+                          points
                         </p>
                       </div>
                     </div>
