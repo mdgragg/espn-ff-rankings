@@ -67,7 +67,7 @@ export default function TeamStatsModal({
           </div>
 
           <div className="detail-stat-row">
-            <span>Points For (Reg Season)</span>
+            <span>Points For </span>
             <strong>
               {formatPoints(team.regularSeasonPointsFor)} (
               {ordinal(team.ranking.regularSeasonPointsForRank)})
@@ -75,7 +75,7 @@ export default function TeamStatsModal({
           </div>
 
           <div className="detail-stat-row">
-            <span>Points Against (Reg Season)</span>
+            <span>Points Against </span>
             <strong>
               {formatPoints(team.regularSeasonPointsAgainst)} (
               {ordinal(team.ranking.regularSeasonPointsAgainstRank)})
@@ -83,7 +83,7 @@ export default function TeamStatsModal({
           </div>
 
           <div className="detail-stat-row">
-            <span>Avg Points Per Week (Reg Season)</span>
+            <span>Avg Points Per Week </span>
             <strong>
               {formatPoints(team.regularSeasonAvgPointsPerWeek)} (
               {ordinal(team.ranking.regularSeasonAvgPointsPerWeekRank)})
@@ -91,7 +91,7 @@ export default function TeamStatsModal({
           </div>
 
           <div className="detail-stat-row">
-            <span>Highest Week Score (Reg Season)</span>
+            <span>Highest Week Score </span>
             <strong>
               {formatPoints(team.regularSeasonHighestWeekScore)} (
               {ordinal(team.ranking.regularSeasonHighestWeekScoreRank)}) Week{" "}
@@ -100,8 +100,10 @@ export default function TeamStatsModal({
           </div>
 
           <div className="detail-stat-row">
-            <span>Recent Trend (Reg Season)</span>
-            <strong className={`trend-${team.regularSeasonRecentFormTrend.trend}`}>
+            <span>Recent Trend </span>
+            <strong
+              className={`trend-${team.regularSeasonRecentFormTrend.trend}`}
+            >
               {team.regularSeasonRecentFormTrend.trend === "up"
                 ? "↑"
                 : team.regularSeasonRecentFormTrend.trend === "down"

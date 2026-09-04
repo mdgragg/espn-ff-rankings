@@ -135,6 +135,15 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         <nav className="week-nav">
           {Array.from({ length: 17 }, (_, index) => index + 1).map((week) => {
             const isActive = week === selectedWeek;
+            const isUnlocked = week <= league.currentWeek;
+
+            if (!isUnlocked) {
+              return (
+                <span key={week} className="week-link disabled">
+                  {week}
+                </span>
+              );
+            }
 
             return (
               <a
