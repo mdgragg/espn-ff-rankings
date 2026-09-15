@@ -846,13 +846,11 @@ export async function fetchEspnLeague(
       }
     }
 
-    // Bench points (points scored by benched players in current week)
-    let totalBenchPoints = 0;
+    // Bench points (current week only, cumulative throughout season)
     if (weeklyScores.has(team.id)) {
       const scores = weeklyScores.get(team.id)!;
-      const currentWeekScore = scores[scores.length - 1];
-
-      if (currentWeekScore) {
+      if (scores.length > 0) {
+        const currentWeekScore = scores[scores.length - 1];
         try {
           const rosterUrl = buildLeagueUrl(leagueId, season, ["mRoster"], {
             scoringPeriodId: currentWeekScore.week,
@@ -863,26 +861,27 @@ export async function fetchEspnLeague(
           );
 
           if (teamRoster?.roster?.entries) {
+            let weekBenchPoints = 0;
             for (const entry of teamRoster.roster.entries) {
               if (entry.lineupSlotId === 20) {
                 const player = entry.playerPoolEntry?.player;
                 if (player?.stats) {
                   const weekStat = player.stats.find(
-                    (s: any) => Number(s.scoringPeriodId) === currentWeekScore.week,
+                    (s: any) => Number(s.scoringPeriodId) === currentWeekScore.week && s.statSourceId === 0,
                   );
                   if (weekStat?.appliedTotal) {
-                    totalBenchPoints += weekStat.appliedTotal;
+                    weekBenchPoints += weekStat.appliedTotal;
                   }
                 }
               }
             }
+            team.benchPoints += weekBenchPoints;
           }
         } catch (error) {
           console.warn(`Failed to fetch roster for team ${team.id}:`, error);
         }
       }
     }
-    team.benchPoints = Math.max(0, totalBenchPoints);
   }
 
   // ----------------------------------------------------------
