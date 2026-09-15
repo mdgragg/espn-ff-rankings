@@ -846,9 +846,43 @@ export async function fetchEspnLeague(
       }
     }
 
-    // Bench points (simplified: estimate based on points for)
-    // Note: Full calculation would need mBoxscore data
-    team.benchPoints = Math.max(0, team.pointsFor * 0.1);
+    // Bench points (points scored by benched players in current week)
+    let totalBenchPoints = 0;
+    if (weeklyScores.has(team.id)) {
+      const scores = weeklyScores.get(team.id)!;
+      const currentWeekScore = scores[scores.length - 1];
+
+      if (currentWeekScore) {
+        try {
+          const rosterUrl = buildLeagueUrl(leagueId, season, ["mRoster"], {
+            scoringPeriodId: currentWeekScore.week,
+          });
+          const rosterData = await fetchEspn(rosterUrl, swid, s2);
+          const teamRoster = rosterData.teams?.find(
+            (t: any) => Number(t.id) === team.id,
+          );
+
+          if (teamRoster?.roster?.entries) {
+            for (const entry of teamRoster.roster.entries) {
+              if (entry.lineupSlotId === 20) {
+                const player = entry.playerPoolEntry?.player;
+                if (player?.stats) {
+                  const weekStat = player.stats.find(
+                    (s: any) => Number(s.scoringPeriodId) === currentWeekScore.week,
+                  );
+                  if (weekStat?.appliedTotal) {
+                    totalBenchPoints += weekStat.appliedTotal;
+                  }
+                }
+              }
+            }
+          }
+        } catch (error) {
+          console.warn(`Failed to fetch roster for team ${team.id}:`, error);
+        }
+      }
+    }
+    team.benchPoints = Math.max(0, totalBenchPoints);
   }
 
   // ----------------------------------------------------------

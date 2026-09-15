@@ -86,7 +86,7 @@ export default function TeamStatsModal({
             <span>Avg Points Per Week </span>
             <strong>
               {formatPoints(team.regularSeasonAvgPointsPerWeek)} (
-              {ordinal(team.ranking.regularSeasonAvgPointsPerWeekRank)})
+              {/* {ordinal(team.ranking.regularSeasonAvgPointsPerWeekRank)}) */}
             </strong>
           </div>
 
